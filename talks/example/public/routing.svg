@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="16">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0 0 10 5 0 10z" fill="#475569"/>
+    </marker>
+  </defs>
+  <rect width="640" height="260" fill="#fff"/>
+  <g stroke="#475569" stroke-width="2" fill="none" marker-end="url(#a)">
+    <path d="M170 60h120"/>
+    <path d="M450 60h20"/>
+    <path d="M470 200H350"/>
+    <path d="M190 200h-20"/>
+  </g>
+  <g fill="#eff6ff" stroke="#2563eb" stroke-width="2">
+    <rect x="20" y="30" width="150" height="60" rx="8"/>
+    <rect x="290" y="30" width="160" height="60" rx="8"/>
+    <rect x="470" y="30" width="150" height="200" rx="8"/>
+    <rect x="190" y="170" width="160" height="60" rx="8"/>
+    <rect x="20" y="170" width="150" height="60" rx="8"/>
+  </g>
+  <g fill="#0f172a" text-anchor="middle">
+    <text x="95" y="66">Agent voice</text>
+    <text x="370" y="66">BlackHole 2ch</text>
+    <text x="545" y="120">Meeting app</text>
+    <text x="545" y="142" font-size="13" fill="#475569">mic = BlackHole 2ch</text>
+    <text x="270" y="198">BlackHole 16ch</text>
+    <text x="270" y="216" font-size="13" fill="#475569">via Multi-Output</text>
+    <text x="95" y="206">Agent ears</text>
+  </g>
+</svg>

@@ -1,0 +1,21 @@
+{
+  "name": "@ai-speaker/web",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Control window (/control) and later the setup wizard (/setup).",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "vue-tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@ai-speaker/protocol": "0.0.0",
+    "vue": "3.5.46"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "6.0.11",
+    "vite": "8.3.8",
+    "vue-tsc": "3.3.14"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "@ai-speaker/server",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Local server and CLI: reads the talk folder, runs the presentation state machine, talks to the Stage and Control windows.",
+  "type": "module",
+  "bin": {
+    "ai-speaker": "./src/cli.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@ai-speaker/protocol": "0.0.0",
+    "@ai-speaker/providers": "0.0.0",
+    "@ai-speaker/talk-format": "0.0.0",
+    "ws": "8.22.2"
+  },
+  "devDependencies": {
+    "@types/ws": "8.18.2"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "name": "@ai-speaker/providers",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Provider contracts (LLM, voice, live agent, avatar) and first implementations.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./inworld": "./src/inworld/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@ai-speaker/talk-format": "0.0.0",
+    "@ai-speaker/protocol": "0.0.0"
+  }
+}

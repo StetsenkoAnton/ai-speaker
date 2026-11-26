@@ -7,3 +7,4 @@ dist/
 .claude/
 .idea/
 .DS_Store
+e2e/.out/

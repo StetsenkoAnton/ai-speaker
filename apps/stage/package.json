@@ -1,0 +1,20 @@
+{
+  "name": "@ai-speaker/stage",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Stage window: Slidev shows the talk's slides; a global layer follows the server and draws the speaker.",
+  "type": "module",
+  "dependencies": {
+    "@ai-speaker/protocol": "0.0.0",
+    "@slidev/cli": "53.1.0",
+    "@slidev/theme-default": "0.25.0",
+    "vue": "*"
+  },
+  "keywords": [
+    "slidev-addon",
+    "slidev"
+  ],
+  "engines": {
+    "slidev": ">=53.0.0"
+  }
+}
