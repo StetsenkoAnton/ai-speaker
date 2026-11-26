@@ -1,0 +1,17 @@
+{
+  "name": "@ai-speaker/talk-format",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Talk folder format: schema, parser and validator.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@slidev/parser": "53.1.0",
+    "yaml": "2.9.1"
+  }
+}

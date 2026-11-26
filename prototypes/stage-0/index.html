@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stage 0 audio prototype</title>
+    <style>
+      body { font: 14px/1.4 system-ui, sans-serif; margin: 16px; max-width: 980px; background: #fff; color: #111; }
+      section { border: 1px solid #ccc; border-radius: 6px; padding: 10px 12px; margin-bottom: 12px; }
+      h2 { font-size: 15px; margin: 0 0 8px; }
+      label { display: inline-block; margin: 2px 12px 2px 0; }
+      select, input[type=text], textarea { font: inherit; }
+      textarea { width: 100%; box-sizing: border-box; }
+      input[type=text] { width: 60%; }
+      button { font: inherit; padding: 4px 10px; margin: 2px 4px 2px 0; }
+      .meter { display: inline-block; width: 260px; height: 12px; background: #eee; vertical-align: middle; position: relative; }
+      .meter > div { height: 100%; width: 0; background: #2a2; }
+      .meter.out > div { background: #27c; }
+      #listen.on { background: #c22; color: #fff; }
+      #stop { background: #222; color: #fff; font-weight: bold; }
+      #log { height: 260px; overflow: auto; background: #f6f6f6; font: 12px/1.35 ui-monospace, monospace; white-space: pre-wrap; padding: 6px; }
+      .muted { color: #666; }
+      table { border-collapse: collapse; }
+      td, th { border: 1px solid #ccc; padding: 2px 8px; text-align: right; }
+    </style>
+  </head>
+  <body>
+    <h1 style="font-size:18px">Stage 0 — audio prototype</h1>
+    <p id="browserWarn" hidden style="background:#c22;color:#fff;padding:8px;border-radius:4px">
+      This browser cannot send audio to a chosen output device (no <code>AudioContext.setSinkId</code>).
+      Open <b>http://localhost:5173</b> in <b>Google Chrome</b>.
+    </p>
+    <p class="muted" id="health">Server: checking…</p>
+
+    <section>
+      <h2>1. Devices</h2>
+      <button id="refresh">Grant mic access &amp; refresh devices</button>
+      <div>
+        <label>Agent output (Teams mic): <select id="outDev"></select></label>
+        <label>Monitor (your headphones, not Multi-Output): <select id="monDev"></select></label>
+      </div>
+      <div>
+        <label>Meeting input (Teams speaker → BlackHole 16ch): <select id="inDev"></select></label>
+      </div>
+    </section>
+
+    <section>
+      <h2>2. Output test (0.7)</h2>
+      <button id="testSignal">Play test signal</button>
+      <span class="meter out"><div id="outMeter"></div></span> <span id="outDb" class="muted"></span>
+    </section>
+
+    <section>
+      <h2>3. Input level (0.8)</h2>
+      <button id="inStart">Start capture</button>
+      <button id="inStop">Stop capture</button>
+      <span class="meter"><div id="inMeter"></div></span> <span id="inDb" class="muted"></span>
+      <div class="muted" id="inSettings"></div>
+      <div>Peak input while agent plays: <b id="echoPeak">—</b>; while agent silent: <b id="idlePeak">—</b>
+        <button id="peakReset">Reset peaks</button></div>
+    </section>
+
+    <section>
+      <h2>4. Cloned voice from file TTS (0.9, 0.15)</h2>
+      <textarea id="ttsText" rows="2">Hi everyone, thanks for joining. Today I want to show you how a talk can be delivered by an agent that speaks in my own voice.</textarea>
+      <button id="ttsPlay">Synthesize &amp; play</button>
+      <button id="ttsReplay">Replay last</button>
+      <span id="ttsInfo" class="muted"></span>
+    </section>
+
+    <section>
+      <h2>5. Live session (0.10–0.13)</h2>
+      <label>LLM: <input id="model" type="text" style="width:260px" value="google-ai-studio/gemini-2.5-flash" /></label>
+      <label>TTS model: <select id="ttsModel"><option>inworld-tts-2</option><option>inworld-tts-2-flash</option></select></label>
+      <div>
+        <label>Listen mode:
+          <select id="turnMode">
+            <option value="manual">A. turn_detection: null + manual commit</option>
+            <option value="vad-gated">B. semantic_vad, audio sent only while Listen is on</option>
+            <option value="vad-always">C. semantic_vad, audio always sent (echo test)</option>
+          </select>
+        </label>
+        <label>Eagerness: <select id="eagerness"><option>low</option><option selected>medium</option><option>high</option></select></label>
+        <label><input type="checkbox" id="interrupt" /> interrupt_response</label>
+      </div>
+      <textarea id="instructions" rows="3">You are the speaker of a short tech talk answering audience questions in a meeting. Answer in the language of the talk (English), in two or three short spoken sentences, under 30 seconds. If you do not know the answer, say you will pass the question to the author.</textarea>
+      <div>
+        <button id="connect">Connect</button>
+        <button id="disconnect">Disconnect</button>
+        <span id="rtState" class="muted">disconnected</span>
+      </div>
+      <div style="margin-top:6px">
+        <button id="listen">Listen</button>
+        <button id="stop">STOP</button>
+        <span id="stopInfo" class="muted"></span>
+      </div>
+      <div style="margin-top:6px">
+        <input id="question" type="text" placeholder="Type a question and press Enter" />
+        <button id="ask">Ask (text)</button>
+      </div>
+      <div style="margin-top:6px">
+        <button id="speakSame">Speak the TTS text above in the live session (timbre check)</button>
+      </div>
+      <div style="margin-top:6px"><b>Q:</b> <span id="lastQ" class="muted"></span><br /><b>A:</b> <span id="lastA" class="muted"></span></div>
+    </section>
+
+    <section>
+      <h2>6. Latency (0.14)</h2>
+      <p class="muted">End of question = last moment the input level was above the speech threshold while listening (voice), or the moment the text was sent. First sound = when the first answer chunk is scheduled to play.</p>
+      <table>
+        <thead><tr><th>#</th><th>kind</th><th>end→first chunk received, ms</th><th>end→first sound, ms</th><th>server speech_stopped→first sound, ms</th></tr></thead>
+        <tbody id="latRows"></tbody>
+      </table>
+      <div>Median end→first sound: <b id="latMedian">—</b> <button id="latReset">Reset</button></div>
+    </section>
+
+    <section>
+      <h2>7. Stability (0.16)</h2>
+      <button id="soakStart">Start 20-min soak (replays last TTS clip)</button>
+      <button id="soakStop">Stop soak</button>
+      <span id="soakInfo" class="muted"></span>
+    </section>
+
+    <section>
+      <h2>Log</h2>
+      <button id="logCopy">Copy log</button> <button id="logClear">Clear</button>
+      <div id="log"></div>
+    </section>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

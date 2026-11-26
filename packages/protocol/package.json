@@ -1,0 +1,13 @@
+{
+  "name": "@ai-speaker/protocol",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Presentation state machine and the messages exchanged by the server, Stage and Control.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  }
+}

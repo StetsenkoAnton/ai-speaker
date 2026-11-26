@@ -1,0 +1,36 @@
+{
+  "name": "ai-speaker",
+  "private": true,
+  "version": "0.0.0",
+  "description": "An agent prepares a talk, delivers it in your cloned voice in an online meeting, answers questions and hands the floor back to you.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "vitest run",
+    "check": "node --env-file-if-exists=.env apps/server/src/cli.ts check",
+    "present": "node --env-file-if-exists=.env apps/server/src/cli.ts present",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.0",
+    "@types/node": "22.20.7",
+    "typescript": "6.0.3",
+    "vitest": "5.1.0"
+  },
+  "slidev": {
+    "addons": [
+      "@ai-speaker/stage"
+    ]
+  },
+  "overrides": {
+    "vite": "8.3.8"
+  }
+}
