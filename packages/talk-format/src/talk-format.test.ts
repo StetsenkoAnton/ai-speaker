@@ -47,6 +47,8 @@ function talk(slides = SLIDES, script = SCRIPT, brief = BRIEF): Talk {
     slides: parseSlides(slides).value,
     script: parseScript(script).value,
     knowledge: [],
+    pronunciation: [],
+    phrases: { closing: ['Questions?'] },
   };
 }
 

@@ -1,6 +1,9 @@
 import { createApp } from 'vue';
 import Control from './Control.vue';
+import Setup from './Setup.vue';
 import './styles.css';
 
-// Stage 1 has a single page; /setup arrives at stage 2.
-createApp(Control).mount('#root');
+// Two pages, no router needed: /setup and everything else is the Control window.
+const page = location.pathname.startsWith('/setup') ? Setup : Control;
+document.title = page === Setup ? 'AI Speaker Setup' : 'AI Speaker Control';
+createApp(page).mount('#root');

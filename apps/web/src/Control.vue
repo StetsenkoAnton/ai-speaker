@@ -2,22 +2,32 @@
 import { computed } from 'vue';
 import { canTransition, type PresentationState } from '@ai-speaker/protocol';
 import { useServer } from './useServer.ts';
+import { usePlayer } from './usePlayer.ts';
+import AudioPanel from './AudioPanel.vue';
 
 const STATE_LABEL: Record<PresentationState, string> = {
   setup: 'Setup',
   ready: 'Ready',
   presenting: 'Presenting',
-  qa: 'Q&A',
+  qa: 'Waiting for questions',
   paused: 'Paused',
   human_takeover: 'You have the floor',
   finished: 'Finished',
 };
 
-const { connected, snapshot, lastError, send } = useServer();
+const server = useServer();
+const { connected, snapshot, lastError, send } = server;
+const player = usePlayer(server);
 
 const slide = computed(() => snapshot.value?.talk.slides[snapshot.value.slideIndex]);
 const navLocked = computed(() => snapshot.value?.state === 'finished');
 const can = (to: PresentationState) => !!snapshot.value && canTransition(snapshot.value.state, to);
+const missing = computed(() => new Set(snapshot.value?.audio.missing ?? []));
+const playingLabel = computed(() => {
+  const playing = snapshot.value?.playing;
+  if (!playing) return '';
+  return playing.kind === 'closing' ? 'Closing phrase' : `Slide audio: ${playing.slideId}`;
+});
 
 // Slidev's own views of the same deck. Only the audience view follows the server.
 const views = computed(() => {
@@ -49,6 +59,7 @@ const views = computed(() => {
           <span :class="snapshot.stages ? 'ok' : 'bad'" data-testid="stages">
             {{ snapshot.stages ? `Stage open (${snapshot.stages})` : 'Stage window not open' }}
           </span>
+          <span v-if="playingLabel" class="ok" data-testid="playing">▶ {{ playingLabel }}</span>
         </div>
       </header>
 
@@ -56,12 +67,14 @@ const views = computed(() => {
         <div class="muted">Slide {{ snapshot.slideIndex + 1 }} of {{ snapshot.talk.slides.length }}</div>
         <div class="slide-title" data-testid="slide-title">{{ slide?.title }}</div>
         <code class="muted">{{ slide?.id }}</code>
+        <span v-if="slide && missing.has(slide.id)" class="bad small"> · no audio</span>
       </section>
 
       <section class="buttons">
         <button v-if="snapshot.state === 'ready'" @click="send({ type: 'start' })">Start</button>
         <button v-if="snapshot.state === 'presenting'" @click="send({ type: 'pause' })">Pause</button>
         <button v-if="snapshot.state === 'paused'" @click="send({ type: 'resume' })">Resume</button>
+        <button v-if="snapshot.state === 'qa'" class="secondary" @click="send({ type: 'close_qa' })">Back to the talk</button>
         <button :disabled="navLocked || snapshot.slideIndex === 0" @click="send({ type: 'prev_slide' })">◀ Back</button>
         <button
           :disabled="navLocked || snapshot.slideIndex >= snapshot.talk.slides.length - 1"
@@ -72,6 +85,8 @@ const views = computed(() => {
         <button class="secondary" :disabled="!can('finished')" @click="send({ type: 'finish' })">Finish</button>
       </section>
       <p v-if="lastError" class="error" role="alert">{{ lastError }}</p>
+
+      <AudioPanel :player="player" :snapshot="snapshot" />
 
       <section v-if="views.length">
         <h2>Windows</h2>
@@ -91,6 +106,7 @@ const views = computed(() => {
               {{ s.title }}
             </button>
             <code class="muted">{{ s.id }}</code>
+            <span v-if="missing.has(s.id)" class="bad small">no audio</span>
           </li>
         </ol>
       </section>

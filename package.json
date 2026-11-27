@@ -17,7 +17,9 @@
     "test": "vitest run",
     "check": "node --env-file-if-exists=.env apps/server/src/cli.ts check",
     "present": "node --env-file-if-exists=.env apps/server/src/cli.ts present",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "render": "node --env-file-if-exists=.env apps/server/src/cli.ts render",
+    "setup": "node --env-file-if-exists=.env apps/server/src/cli.ts setup"
   },
   "devDependencies": {
     "@playwright/test": "^1.65.0",

@@ -40,6 +40,8 @@ export interface KnowledgeDoc {
   text: string;
 }
 
+import type { PronunciationEntry, TalkPhrases } from './speech.ts';
+
 export interface Talk {
   dir: string;
   brief: TalkBrief;
@@ -48,6 +50,10 @@ export interface Talk {
   slides: Slide[];
   script: ScriptSection[];
   knowledge: KnowledgeDoc[];
+  /** From `pronunciation.yaml`; empty when the file is missing. */
+  pronunciation: PronunciationEntry[];
+  /** From `phrases.yaml`, falling back to the built-in phrases of the talk language. */
+  phrases: TalkPhrases;
 }
 
 export interface ValidationIssue {

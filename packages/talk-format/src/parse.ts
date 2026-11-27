@@ -2,6 +2,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { parseSync } from '@slidev/parser/core';
 import { parse as parseYaml } from 'yaml';
+import { PHRASES_FILE, PRONUNCIATION_FILE, defaultPhrases, parsePhrases, parsePronunciation } from './speech.ts';
 import type { KnowledgeDoc, ScriptSection, Slide, Talk, TalkBrief, ValidationIssue } from './types.ts';
 
 export const TALK_FILES = {
@@ -132,7 +133,17 @@ export async function loadTalk(dir: string): Promise<Parsed<Talk>> {
   const brief = parseBrief(await read(TALK_FILES.brief, true));
   const slides = parseSlides(await read(TALK_FILES.slides, true));
   const script = parseScript(await read(TALK_FILES.script, true));
-  issues.push(...brief.issues, ...slides.issues, ...script.issues);
+  const pronunciation = parsePronunciation(await read(PRONUNCIATION_FILE, false));
+  const phrases = parsePhrases(await read(PHRASES_FILE, false));
+  issues.push(...brief.issues, ...slides.issues, ...script.issues, ...pronunciation.issues, ...phrases.issues);
+  const closing = phrases.value.closing ?? defaultPhrases(brief.value.lang)?.closing ?? [];
+  if (!closing.length && brief.value.lang) {
+    issues.push({
+      severity: 'warning',
+      file: PHRASES_FILE,
+      message: `No built-in closing phrases for \`${brief.value.lang}\`: add \`closing:\` to ${PHRASES_FILE}.`,
+    });
+  }
   const talk: Talk = {
     dir,
     brief: brief.value,
@@ -140,6 +151,8 @@ export async function loadTalk(dir: string): Promise<Parsed<Talk>> {
     slides: slides.value,
     script: script.value,
     knowledge: await readKnowledge(dir),
+    pronunciation: pronunciation.value,
+    phrases: { closing },
   };
   return { value: talk, issues };
 }
