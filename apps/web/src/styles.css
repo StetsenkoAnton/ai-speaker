@@ -44,3 +44,18 @@ a { color: var(--accent); }
 .views { list-style: none; padding: 0; margin: 0; }
 .views li { padding: 2px 0; }
 .views a { display: inline-block; min-width: 84px; font-weight: 600; }
+.small { font-size: 13px; }
+.warn { color: #b45309; }
+@media (prefers-color-scheme: dark) { .warn { color: #fbbf24; } }
+.audio { border: 1px solid var(--line); border-radius: 8px; padding: 4px 12px 8px; margin-top: 16px; }
+.audio .row { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 6px 0; }
+.audio label { display: flex; flex-direction: column; font-size: 13px; color: var(--muted); gap: 2px; }
+.audio select { font: inherit; max-width: 280px; }
+.meter { display: inline-block; width: 160px; height: 10px; background: var(--line); border-radius: 5px; overflow: hidden; }
+.meter > span { display: block; height: 100%; background: var(--accent); }
+.slides li .small { margin-left: 8px; }
+.setup textarea, .setup input[type='text'] { font: inherit; }
+.setup textarea { width: 100%; box-sizing: border-box; }
+.setup h3 { font-size: 14px; margin: 14px 0 4px; }
+label.inline { display: inline-flex; flex-direction: row; align-items: center; gap: 6px; color: var(--fg); }
+button.danger { background: var(--bad); border-color: var(--bad); }

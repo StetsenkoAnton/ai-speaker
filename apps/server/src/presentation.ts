@@ -26,7 +26,8 @@ export class Presentation {
     return this.transition('ready');
   }
 
-  snapshot(stages: number): Snapshot {
+  /** The parts of the snapshot this class owns; the server adds audio and player state. */
+  snapshot(stages: number): Pick<Snapshot, 'talk' | 'state' | 'slideIndex' | 'speaker' | 'stages'> {
     return { talk: this.talk, state: this.state, slideIndex: this.slideIndex, speaker: { ...this.speaker }, stages };
   }
 

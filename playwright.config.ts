@@ -8,12 +8,17 @@ export default defineConfig({
   testDir: 'e2e',
   outputDir: 'e2e/.out/results',
   timeout: 60_000,
-  use: { viewport: { width: 1280, height: 720 } },
+  workers: 1,
+  use: {
+    viewport: { width: 1280, height: 720 },
+    launchOptions: { args: ['--autoplay-policy=no-user-gesture-required'] },
+  },
   webServer: {
-    command: 'node apps/server/src/cli.ts present example',
+    // A copy of the example with generated tones as its audio; no Inworld, no .env voice.
+    command: 'node e2e/prepare.ts && node apps/server/src/cli.ts present e2e/.out/talk',
     url: `http://localhost:${ports.STAGE_PORT}/`,
-    env: ports,
+    env: { ...ports, INWORLD_VOICE_ID: '' },
     reuseExistingServer: false,
-    timeout: 60_000,
+    timeout: 90_000,
   },
 });

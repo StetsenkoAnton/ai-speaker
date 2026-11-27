@@ -4,6 +4,8 @@
 // Docs checked 2026-11-26:
 //   TTS:            https://docs.inworld.ai/api-reference/ttsAPI/texttospeech/synthesize-speech.md
 //   Session tokens: https://docs.inworld.ai/portal/session-tokens.md (Realtime refuses one-time tokens)
+//   Voices:         https://docs.inworld.ai/api-reference/voiceAPI/voiceservice/clone-voice.md,
+//                   list-voices.md, delete-voice.md (clone and delete need a key with Write access)
 
 const API = 'https://api.inworld.ai';
 
@@ -23,9 +25,17 @@ export class InworldError extends Error {
 export interface InworldConfig {
   /** Base64 credential from Inworld Portal -> API Keys. */
   apiKey: string;
-  /** Cloned voice id. Stays out of git. */
-  voiceId: string;
+  /** Cloned voice id. Stays out of git. Empty until a voice is chosen in /setup. */
+  voiceId?: string;
   ttsModel?: string;
+}
+
+export interface InworldVoice {
+  voiceId: string;
+  displayName: string;
+  languageCode?: string;
+  /** "IVC" for an instant voice clone, "SYSTEM" for built-in voices. */
+  source?: string;
 }
 
 export interface SynthesizeResult {
@@ -51,9 +61,8 @@ export class InworldClient {
   readonly config: Required<InworldConfig>;
 
   constructor(config: InworldConfig) {
-    if (!config.apiKey) throw new InworldError('Inworld API key is not set', 500);
-    if (!config.voiceId) throw new InworldError('Inworld voice id is not set', 500);
-    this.config = { ttsModel: DEFAULT_TTS_MODEL, ...config };
+    if (!config.apiKey) throw new InworldError('INWORLD_API_KEY is not set in .env', 500);
+    this.config = { ttsModel: DEFAULT_TTS_MODEL, voiceId: '', ...config };
   }
 
   private headers() {
@@ -73,8 +82,11 @@ export class InworldClient {
     return { token, expirationTime };
   }
 
-  /** One-shot synthesis with the cloned voice. */
-  async synthesize(text: string, signal?: AbortSignal): Promise<SynthesizeResult> {
+  /** One-shot synthesis. Uses the configured voice unless another one is given. */
+  async synthesize(text: string, options: { voiceId?: string; signal?: AbortSignal } = {}): Promise<SynthesizeResult> {
+    const { signal } = options;
+    const voiceId = options.voiceId || this.config.voiceId;
+    if (!voiceId) throw new InworldError('INWORLD_VOICE_ID is not set in .env: choose a voice in /setup', 500);
     if (!text.trim()) throw new InworldError('Text is empty', 400);
     if (text.length > MAX_TTS_CHARS) throw new InworldError(`Text is longer than ${MAX_TTS_CHARS} characters`, 400);
     const started = performance.now();
@@ -83,7 +95,7 @@ export class InworldClient {
       headers: this.headers(),
       body: JSON.stringify({
         text,
-        voiceId: this.config.voiceId,
+        voiceId,
         modelId: this.config.ttsModel,
         audioConfig: { audioEncoding: 'LINEAR16', sampleRateHertz: TTS_SAMPLE_RATE },
       }),
@@ -96,5 +108,55 @@ export class InworldClient {
       characters: body.usage?.processedCharactersCount ?? text.length,
       ms: Math.round(performance.now() - started),
     };
+  }
+
+  /** Voices of this workspace (clones), or all voices including the built-in ones. */
+  async listVoices(options: { ownedOnly?: boolean } = {}): Promise<InworldVoice[]> {
+    const voices: InworldVoice[] = [];
+    let pageToken = '';
+    do {
+      const params = new URLSearchParams({ pageSize: '500' });
+      if (options.ownedOnly) params.set('filter', 'owned="true"');
+      if (pageToken) params.set('pageToken', pageToken);
+      const res = await fetch(`${API}/voices/v1/voices?${params}`, { headers: this.headers(), signal: AbortSignal.timeout(15_000) });
+      if (!res.ok) throw await upstreamError(res, 'List voices');
+      const body = (await res.json()) as { voices?: InworldVoice[]; nextPageToken?: string };
+      for (const v of body.voices ?? []) {
+        voices.push({ voiceId: v.voiceId, displayName: v.displayName, languageCode: v.languageCode, source: v.source });
+      }
+      pageToken = body.nextPageToken ?? '';
+    } while (pageToken);
+    return voices;
+  }
+
+  /** Instant voice clone from WAV or MP3 samples (3 to 30 seconds in total works best). */
+  async cloneVoice(request: { displayName: string; languageCode?: string; samples: Uint8Array[] }): Promise<{ voice: InworldVoice; warnings: string[] }> {
+    const res = await fetch(`${API}/voices/v1/voices:clone`, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify({
+        displayName: request.displayName,
+        languageCode: request.languageCode ?? 'auto',
+        voiceSamples: request.samples.map((s) => ({ audioData: Buffer.from(s).toString('base64') })),
+        audioProcessingConfig: { removeBackgroundNoise: true },
+      }),
+      signal: AbortSignal.timeout(120_000),
+    });
+    if (!res.ok) throw await upstreamError(res, 'Clone voice');
+    const body = (await res.json()) as {
+      voice: InworldVoice;
+      audioSamplesValidated?: Array<{ errors?: Array<{ text?: string }>; warnings?: Array<{ text?: string }> }>;
+    };
+    const warnings = (body.audioSamplesValidated ?? []).flatMap((s) => [...(s.errors ?? []), ...(s.warnings ?? [])].map((w) => w.text ?? ''));
+    return { voice: body.voice, warnings: warnings.filter(Boolean) };
+  }
+
+  async deleteVoice(voiceId: string): Promise<void> {
+    const res = await fetch(`${API}/voices/v1/voices/${encodeURIComponent(voiceId)}`, {
+      method: 'DELETE',
+      headers: this.headers(),
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) throw await upstreamError(res, 'Delete voice');
   }
 }

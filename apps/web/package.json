@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "@ai-speaker/protocol": "0.0.0",
-    "vue": "3.5.46"
+    "vue": "3.5.46",
+    "@ai-speaker/providers": "0.0.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "6.0.11",
